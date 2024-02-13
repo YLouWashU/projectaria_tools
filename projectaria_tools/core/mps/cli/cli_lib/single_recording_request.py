@@ -307,25 +307,29 @@ class SingleRecordingModel:
         self._logger.debug(event)
         if not self._force:
             # check if there are any existing requests with this file hash
-            requested_features: List[
+            prev_requested_features: List[
                 MpsFeatureRequest
             ] = await self._http_helper.query_mps_requested_features_by_file_hash(
                 self._recording.file_hash
             )
+            # Ignore features not requested for this run
+            prev_requested_features = [
+                f for f in prev_requested_features if f.feature in self._features
+            ]
             if self._retry_failed:
                 # check if there are any failed requests with this file hash
                 # If we find any, remove them from the list so that they can be
                 # retried
-                requested_features = [
-                    r for r in requested_features if r.status != Status.FAILED
+                prev_requested_features = [
+                    r for r in prev_requested_features if r.status != Status.FAILED
                 ]
 
-            for r in requested_features:
+            for r in prev_requested_features:
                 await self._request_monitor.track_feature_request(
                     recordings=[self._recording], feature_request=r
                 )
             self._features = self._features.difference(
-                {r.feature for r in requested_features}
+                {r.feature for r in prev_requested_features}
             )
         if self._features:
             await self.next()

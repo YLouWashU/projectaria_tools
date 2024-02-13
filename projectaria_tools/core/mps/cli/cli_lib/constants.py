@@ -52,12 +52,13 @@ UPLOAD_TIMEOUT_SECS: Final[str] = "upload_timeout_secs"
 
 # Common http status codes that should be retried
 HTTP_RETRY_CODES: Final[Sequence[int]] = [
-    HTTPStatus.TOO_MANY_REQUESTS,
-    HTTPStatus.SERVICE_UNAVAILABLE,
-    HTTPStatus.INTERNAL_SERVER_ERROR,
-    HTTPStatus.REQUEST_TIMEOUT,
+    HTTPStatus.BAD_GATEWAY,
     HTTPStatus.BAD_REQUEST,
+    HTTPStatus.INTERNAL_SERVER_ERROR,
     HTTPStatus.PRECONDITION_FAILED,
+    HTTPStatus.REQUEST_TIMEOUT,
+    HTTPStatus.SERVICE_UNAVAILABLE,
+    HTTPStatus.TOO_MANY_REQUESTS,
 ]
 
 # Status display

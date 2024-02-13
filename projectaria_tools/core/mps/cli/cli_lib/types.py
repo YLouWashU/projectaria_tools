@@ -167,3 +167,11 @@ class VrsHealthCheckError(Exception):
     """
 
     pass
+
+
+class GraphQLError(Exception):
+    """
+    Raised when the GraphQL throws an error
+    """
+
+    pass
