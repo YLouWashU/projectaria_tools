@@ -16,6 +16,7 @@ import argparse
 import asyncio
 import functools
 import glob
+import json
 import logging
 from enum import auto, Enum, unique
 from pathlib import Path
@@ -97,10 +98,6 @@ class MultiRecordingRequest(BaseStateMachine):
         self._monitor: RequestMonitor = monitor
         self._http_helper: HttpHelper = http_helper
         self._cmd_args: argparse.Namespace = cmd_args
-        if len(list(self._cmd_args.output_dir.glob("*"))):
-            raise FileExistsError(
-                f"Output directory {self._cmd_args.output_dir} is not empty."
-            )
         super().__init__(
             states=self.States,
             transitions=self.TRANSITIONS,
@@ -198,12 +195,16 @@ class MultiRecordingModel:
         self._key_id: int = key_id
         self._error_codes: Dict[Path, int] = {}
 
+        multi_slam_mapping: Dict[str, str] = {}
         for i, rec in enumerate(recordings):
+            output_path = self._output_dir / str(i)
             self._recordings.append(
-                AriaRecording.create(
-                    vrs_path=rec, output_path=self._output_dir / str(i)
-                )
+                AriaRecording.create(vrs_path=rec, output_path=output_path)
             )
+            multi_slam_mapping[str(rec)] = str(output_path)
+        # Save the mapping between original vrs files and the output directory
+        with open(self._output_dir / "multi_slam_mapping.json", "w") as fp:
+            json.dump(multi_slam_mapping, fp, indent=2)
 
     @property
     def recordings(self) -> Sequence[Path]:
