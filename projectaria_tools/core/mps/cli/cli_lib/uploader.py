@@ -22,6 +22,7 @@ from statistics import median
 from typing import Any, Dict, final, Final, List, Optional, Tuple
 
 import aiofiles
+import aiohttp
 import xxhash
 
 from .common import Config, CustomAdapter, get_pretty_size, retry
@@ -90,6 +91,7 @@ class Uploader(RunnerWithProgress):
     @final
     @retry(
         exceptions=[
+            aiohttp.client_exceptions.ClientOSError,
             asyncio.TimeoutError,
             UploadPending,
         ],

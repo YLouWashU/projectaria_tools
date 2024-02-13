@@ -23,7 +23,7 @@ from aiohttp.client_exceptions import ContentTypeError
 from .common import Config, retry
 from .constants import BACKOFF, GRAPHQL, HTTP_RETRY_CODES, INTERVAL, RETRIES
 from .response_parser import ResponseParser
-from .types import MpsFeatureRequest, MpsRequest
+from .types import GraphQLError, MpsFeatureRequest, MpsRequest
 
 logger = logging.getLogger(__name__)
 
@@ -206,6 +206,7 @@ class HttpHelper:
 
     @retry(
         error_codes=HTTP_RETRY_CODES,
+        exceptions=[GraphQLError],
         retries=config.getint(GRAPHQL, RETRIES),
         interval=config.getfloat(GRAPHQL, INTERVAL),
         backoff=config.getfloat(GRAPHQL, BACKOFF),
@@ -227,6 +228,9 @@ class HttpHelper:
             },
         )
         logger.debug(f"GraphQL response {json.dumps(response, indent=2)}")
+        if "errors" in response:
+            logger.error(f"GraphQL errors: {response['errors']}")
+            raise GraphQLError(response["errors"])
         return response
 
 

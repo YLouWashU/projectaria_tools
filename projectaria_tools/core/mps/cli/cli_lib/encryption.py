@@ -170,7 +170,7 @@ class FileEncryptor:
             while chunk := fr.read(self._chunk_size):
                 if len(chunk) == 0:
                     break
-                cipher_text = self._cipher.encrypt(pad(chunk, AES.block_size))
+                cipher_text = self._cipher.encrypt(chunk)
                 dest_stream.write(cipher_text)
                 processed_bytes += len(chunk)
                 self._logger.debug(f"Encrypted {processed_bytes} bytes")

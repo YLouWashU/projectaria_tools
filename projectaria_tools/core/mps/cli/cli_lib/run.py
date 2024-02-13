@@ -33,6 +33,9 @@ from .types import MpsFeature
 
 logger = logging.getLogger(__name__)
 
+_SINGLE_COMMAND: str = "single"
+_MULTI_COMMAND: str = "multi"
+
 
 async def _run_async():
     """Main async entry point for the CLI"""
@@ -52,20 +55,20 @@ async def _run_async():
 
         # Create MPS Request Monitor and MPS Requestor
         request_monitor = RequestMonitor(http_helper)
-        if args.command == "multi":
+        if args.mode == _MULTI_COMMAND:
             requestor: MultiRecordingRequest = MultiRecordingRequest(
                 monitor=request_monitor,
                 http_helper=http_helper,
                 cmd_args=args,
             )
-        elif args.command == "single":
+        elif args.mode == _SINGLE_COMMAND:
             requestor: SingleRecordingRequest = SingleRecordingRequest(
                 monitor=request_monitor,
                 http_helper=http_helper,
                 cmd_args=args,
             )
         else:
-            raise ValueError(f"Unknown command {args.command}")
+            raise ValueError(f"Unknown mode {args.mode}")
 
         # Add new VRS files to be processed
         await requestor.add_new_recordings(args.input)
@@ -150,10 +153,12 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Aria MPS Command Line Interface")
 
     # Define the subparsers
-    subparsers = parser.add_subparsers(dest="command", help="sub-command help")
+    subparsers = parser.add_subparsers(
+        dest="mode", help="sub-command help", required=True
+    )
     # Define the single_sequence subcommand
     parser_single = subparsers.add_parser(
-        "single",
+        _SINGLE_COMMAND,
         help="Single sequence MPS. MPS will process each VRS file separately",
     )
     _add_common_args(parser_single)
@@ -167,7 +172,7 @@ def _parse_args() -> argparse.Namespace:
     )
     # Define the multi_sequence subcommand
     parser_multi = subparsers.add_parser(
-        "multi",
+        _MULTI_COMMAND,
         help="Multi sequence MPS. MPS will process the group of VRS files together to produce a trajectories in a common frame of reference.",
     )
     _add_common_args(parser_multi)

@@ -135,7 +135,7 @@ class StatusDisplay:
         )
 
         try:
-            with Live(layout) as live:
+            with Live(layout, screen=True) as live:
                 while not self._stop_event.is_set():
                     feature_statuses = self._refresh()
                     features = sorted(_get_all_features(feature_statuses))

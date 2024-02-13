@@ -219,7 +219,7 @@ class Config(ConfigParser):
                 _DEFAULT_CONFIG: Dict[str, Any] = {
                     UPLOAD: {
                         BACKOFF: "1.5 # Backoff factor for retries",
-                        CONCURRENT_UPLOADS: "10 # Maximum number of concurrent uploads",
+                        CONCURRENT_UPLOADS: "4 # Maximum number of concurrent uploads",
                         INTERVAL: "20 # Interval between runs",
                         MAX_CHUNK_SIZE: "104857600 # 100 * 2**20 (100 MB)",
                         MIN_CHUNK_SIZE: "5242880 # 5 * 2**20 (5MB)",
