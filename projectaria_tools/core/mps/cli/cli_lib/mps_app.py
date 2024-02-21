@@ -297,9 +297,6 @@ class MpsApp(App):
         self.query_one("#user", Static).update(
             Text.from_markup(f"Username: [bold][cyan]{self._authenticator.user}"),
         )
-        self.query_one("#status_title", Static).update(
-            f"[b] MPS REQUESTS - {self._args.mode.upper()}",
-        )
 
     @work
     async def run_mps(self) -> None:
@@ -308,6 +305,9 @@ class MpsApp(App):
         """
         self._http_helper.set_auth_token(self._authenticator.auth_token)
         self._update_username()
+        self.query_one("#status_title", Static).update(
+            f"[b] MPS REQUESTS - {self._args.mode.upper()}",
+        )
         self.query_one("#elapsed_time", ElapsedTime).reset()
         await self._mps.run(self._args, self._log_path)
 

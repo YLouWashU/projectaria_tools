@@ -46,7 +46,11 @@ class Mps:
         """
         logger.debug("Running MPS")
         # Create MPS Request Monitor and MPS Requestor
-        self._features = args.features
+        self._features = (
+            list(args.features)
+            if args.mode == _SINGLE_COMMAND
+            else [MpsFeature.MULTI_SLAM]
+        )
         self._log_path = log_path
         self._request_monitor = RequestMonitor(self._http_helper)
         if args.mode == _MULTI_COMMAND:
