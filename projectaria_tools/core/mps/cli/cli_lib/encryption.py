@@ -26,7 +26,6 @@ import aiofiles
 from Crypto.Cipher import AES, PKCS1_v1_5
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
-from Crypto.Util.Padding import pad
 
 from .common import Config, CustomAdapter, to_proc
 from .constants import CHUNK_SIZE, CONCURRENT_ENCRYPTIONS, ENCRYPTION

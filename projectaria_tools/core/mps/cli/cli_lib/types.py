@@ -124,6 +124,8 @@ class MpsFeatureRequest:
     feature: MpsFeature
     status: Status
     results: List[MpsResult]
+    status_message: Optional[str] = None
+    error_code: Optional[int] = None
 
     def is_pending(self) -> bool:
         return self.status in [Status.SCHEDULED, Status.PROCESSING]

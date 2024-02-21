@@ -41,6 +41,7 @@ from .constants import (
 )
 from .encryption import VrsEncryptor
 from .hash_calculator import HashCalculator
+from .health_check import is_eligible, run_health_check
 from .http_helper import HttpHelper
 from .request_monitor import RequestMonitor
 from .types import (
@@ -52,7 +53,6 @@ from .types import (
     Status,
 )
 from .uploader import check_if_already_uploaded, Uploader
-from .vrs_health_check_slam import is_eligible, run_health_check
 
 config = Config.get()
 

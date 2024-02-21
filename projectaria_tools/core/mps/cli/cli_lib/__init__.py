@@ -26,6 +26,7 @@ def _install_deps():
         "projectaria-tools",
         "pycryptodome",
         "rich",
+        "textual",
         "transitions",
         "xxhash",
     }

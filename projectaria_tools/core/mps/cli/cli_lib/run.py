@@ -19,80 +19,19 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
-import aiohttp
-
-from .authentication import authenticate, logout
+from .authentication import AuthenticationError, Authenticator
 from .common import Config
 from .constants import DEFAULT, LOG_DIR
 from .http_helper import HttpHelper
-from .multi_recording_request import MultiRecordingRequest
-from .request_monitor import RequestMonitor
-from .single_recording_request import SingleRecordingRequest
-from .status_display import StatusDisplay
+from .mps import Mps
+from .mps_app import MpsApp
 from .types import MpsFeature
 
 logger = logging.getLogger(__name__)
 
 _SINGLE_COMMAND: str = "single"
 _MULTI_COMMAND: str = "multi"
-
-
-async def _run_async():
-    """Main async entry point for the CLI"""
-    asyncio.current_task().set_name("main")
-    args = _parse_args()
-    log_path: Path = _configure_logging(args)
-    # The --logout parameter on cmd line will be overridden by the user input during
-    # authentication, if they select to save the auth token, when manually entering
-    # username and password.
-    enable_logout: bool = args.logout
-
-    async with aiohttp.ClientSession(raise_for_status=True) as http_session:
-        http_helper: HttpHelper = HttpHelper(http_session)
-        username, enable_logout = await authenticate(
-            http_helper, args.username, args.password, enable_logout
-        )
-
-        # Create MPS Request Monitor and MPS Requestor
-        request_monitor = RequestMonitor(http_helper)
-        if args.mode == _MULTI_COMMAND:
-            requestor: MultiRecordingRequest = MultiRecordingRequest(
-                monitor=request_monitor,
-                http_helper=http_helper,
-                cmd_args=args,
-            )
-        elif args.mode == _SINGLE_COMMAND:
-            requestor: SingleRecordingRequest = SingleRecordingRequest(
-                monitor=request_monitor,
-                http_helper=http_helper,
-                cmd_args=args,
-            )
-        else:
-            raise ValueError(f"Unknown mode {args.mode}")
-
-        # Add new VRS files to be processed
-        await requestor.add_new_recordings(args.input)
-
-        display: Optional[StatusDisplay] = None
-        # Do not show the table in verbose mode. The continuous stream of verbose output
-        # makes it hard to read
-        if not args.verbose:
-            display: StatusDisplay = StatusDisplay(
-                [requestor, request_monitor], username=username, log_path=log_path
-            )
-            display_task = asyncio.create_task(display.refresh())
-        # Wait for all the requests to be submitted
-        await asyncio.gather(*requestor.tasks)
-
-        # Wait for all the requests to finish
-        await asyncio.gather(*request_monitor.tasks)
-
-        if display:  # Stop the display
-            await asyncio.sleep(2)
-            display.stop()
-            await display_task
-        if enable_logout:
-            await logout(http_helper)
+_LOGOUT_COMMAND: str = "logout"
 
 
 def _add_common_args(parser: argparse.ArgumentParser):
@@ -119,12 +58,6 @@ def _add_common_args(parser: argparse.ArgumentParser):
         action="store_true",
     )
     parser.add_argument(
-        "-v",
-        "--verbose",
-        help="Verbose output",
-        action="store_true",
-    )
-    parser.add_argument(
         "-u",
         "--username",
         help="Username to use when connecting to MPS. This can be an email address, or a username",
@@ -137,9 +70,15 @@ def _add_common_args(parser: argparse.ArgumentParser):
         type=str,
     )
     parser.add_argument(
-        "--logout",
-        help="Log out from MPS after processing the request. The cached auth token will be removed.",
+        "--save-token",
+        help="Cache the token locally after successful login",
         action="store_true",
+    )
+    parser.add_argument(
+        "--no-ui",
+        help="Do not display the UI showing status of each MPS Request",
+        action="store_false",
+        dest="show_ui",
     )
     # For debugging only to re-upload the same file by appending the suffix to the
     # file hash
@@ -185,10 +124,16 @@ def _parse_args() -> argparse.Namespace:
         required=True,
     )
 
+    # Define the logout subcommand
+    subparsers.add_parser(
+        _LOGOUT_COMMAND,
+        help="Logout from MPS. The cached auth token will be removed.",
+    )
+
     return parser.parse_args()
 
 
-def _configure_logging(args) -> Path:
+def _configure_logging(verbose: bool) -> Path:
     """
     Setup logging to file and remove default logger unless verbose mode is enabled
     """
@@ -197,7 +142,7 @@ def _configure_logging(args) -> Path:
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file: Path = log_dir / f"{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.log"
     handlers: List[logging.StreamHandler] = [logging.FileHandler(log_file)]
-    if args.verbose:
+    if verbose:
         handlers.append(logging.StreamHandler())
     logging.basicConfig(
         handlers=handlers,
@@ -209,7 +154,37 @@ def _configure_logging(args) -> Path:
     return log_file
 
 
+async def _run_async(args: argparse.Namespace, log_path: Path) -> None:
+    """Asynchronous entry point for the CLI"""
+    asyncio.current_task().set_name("main")
+    async with HttpHelper() as http_helper:
+        authenticator: Authenticator = Authenticator(http_helper)
+
+        if args.mode == _LOGOUT_COMMAND:
+            await authenticator.logout()
+        else:
+            if args.username and args.password:
+                await authenticator.login(args.username, args.password, args.save_token)
+            elif not await authenticator.load_and_validate_token():
+                raise AuthenticationError("Failed to authenticate")
+            http_helper.set_auth_token(authenticator.auth_token)
+            mps: Mps = Mps(http_helper)
+            await mps.run(args, log_path)
+
+            # Logout and remove the auth token if user passed the --username and
+            # --password but no --save-token flag
+            if args.username and args.password and not args.save_token:
+                await authenticator.logout()
+
+
 def run():
     """Synchronous entry point for the CLI"""
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(_run_async())
+    args = _parse_args()
+    if args.mode == _LOGOUT_COMMAND or not args.show_ui:
+        log_path: Path = _configure_logging(True)
+        asyncio.get_event_loop().run_until_complete(_run_async(args, log_path))
+    else:
+        # show UI here
+        log_path: Path = _configure_logging(False)
+        mps_app = MpsApp(args, log_path)
+        mps_app.run()

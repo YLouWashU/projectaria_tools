@@ -53,7 +53,9 @@ class ResponseParser:
         return MpsFeatureRequest(
             fbid=response["id"],
             status=Status(response["status"]),
+            status_message=response["status_message"],
             feature=MpsFeature(response["feature"]),
+            error_code=response["error_code"],
             results=ResponseParser.parse_results(response["mps_results"]["nodes"]),
         )
 
