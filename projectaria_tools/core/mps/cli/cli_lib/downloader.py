@@ -69,7 +69,7 @@ class Downloader(RunnerWithProgress):
         self._processed = 0
         self._total = 0
         async with self.semaphore_:
-            async with self._http_helper.session.get(self._url) as response:
+            async with self._http_helper.get(self._url) as response:
                 filename = (
                     self._download_filename or response.content_disposition.filename
                 )
