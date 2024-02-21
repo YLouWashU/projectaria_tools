@@ -28,6 +28,7 @@ import xxhash
 from .common import Config, CustomAdapter, get_pretty_size, retry
 from .constants import (
     BACKOFF,
+    CONCURRENT_UPLOADS,
     HTTP_RETRY_CODES,
     INTERVAL,
     MAX_CHUNK_SIZE,
@@ -72,7 +73,7 @@ class Uploader(RunnerWithProgress):
     """
 
     # Limits the number of concurrent uploads
-    semaphore_: Semaphore = Semaphore(value=config.getint(UPLOAD, "concurrent_uploads"))
+    semaphore_: Semaphore = Semaphore(value=config.getint(UPLOAD, CONCURRENT_UPLOADS))
 
     def __init__(
         self,

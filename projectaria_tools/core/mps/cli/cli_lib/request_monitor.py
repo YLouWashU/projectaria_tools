@@ -17,13 +17,20 @@ import json
 import logging
 from enum import auto, Enum, unique
 from pathlib import Path
-from typing import Any, Dict, Final, List, Mapping, Sequence
+from typing import Any, Dict, Final, List, Mapping, Optional, Sequence
 
 from transitions.core import EventData
 
 from .base_state_machine import BaseStateMachine
 from .common import Config
-from .constants import DEFAULT, DOWNLOADING, ERROR, STATUS_CHECK_INTERVAL, SUCCESS
+from .constants import (
+    DEFAULT,
+    DOWNLOADING,
+    ERROR,
+    ERROR_STATE_MACHINE,
+    STATUS_CHECK_INTERVAL,
+    SUCCESS,
+)
 from .downloader import Downloader
 from .http_helper import HttpHelper
 from .types import (
@@ -63,7 +70,7 @@ class RequestMonitor(BaseStateMachine):
         FAILURE = auto()
 
     TRANSITIONS: Final[List[List[Any]]] = [
-        ["fail", "*", States.FAILURE],
+        ["next", "*", States.FAILURE, "has_error"],
         ["start", States.CREATE, States.WAIT],
         ["next", States.WAIT, States.DOWNLOAD],
         ["next", States.DOWNLOAD, States.SUCCESS],
@@ -127,6 +134,7 @@ class RequestMonitorModel:
         self._feature_request: MpsFeatureRequest = feature_request
         self._http_helper: HttpHelper = http_helper
         self._progress: float = 0.0
+        self._error_code: Optional[int] = None
         self._downloaders: Dict[Path, Downloader] = {}
 
     @property
@@ -159,9 +167,17 @@ class RequestMonitorModel:
         elif self.is_SUCCESS():
             return ModelState(status=SUCCESS)
         elif self.is_FAILURE():
-            return ModelState(status=ERROR)
+            return ModelState(status=ERROR, error_code=str(self._error_code))
 
         raise RuntimeError(f"Unknown state {self.state}")
+
+    def has_error(self, event: EventData) -> bool:
+        """
+        Check if an error occurred during the state machine execution
+        """
+        logger.debug(event)
+        logger.debug(f"has_error : {self._error_code}")
+        return self._error_code is not None
 
     async def on_enter_WAIT(self, event: EventData) -> None:
         logger.debug(event)
@@ -172,10 +188,9 @@ class RequestMonitorModel:
                 self._feature_request.fbid
             )
 
-        if self._feature_request.status == Status.SUCCEEDED:
-            await self.next()
-        else:
-            await self.fail(self._feature_request.status)
+        if self._feature_request.status == Status.FAILED:
+            self._error_code = self._feature_request.error_code
+        await self.next()
 
     async def on_enter_DOWNLOAD(self, event: EventData) -> None:
         logger.debug(event)
@@ -232,6 +247,8 @@ class RequestMonitorModel:
             raise event.error
         except Exception as e:
             logger.exception(e)
+        self._error_code = ERROR_STATE_MACHINE
+        await self.next()
 
     async def _download_multi_slam_summary(self) -> None:
         """

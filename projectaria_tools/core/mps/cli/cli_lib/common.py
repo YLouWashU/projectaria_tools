@@ -16,6 +16,7 @@ import asyncio
 import concurrent
 import functools
 import logging
+import platform
 import zipfile
 from configparser import ConfigParser
 from datetime import datetime, timedelta
@@ -42,6 +43,7 @@ from .constants import (
     CONCURRENT_DOWNLOADS,
     CONCURRENT_ENCRYPTIONS,
     CONCURRENT_HASHES,
+    CONCURRENT_HEALTH_CHECKS,
     CONCURRENT_UPLOADS,
     CONFIG_FILE,
     DEFAULT,
@@ -51,6 +53,7 @@ from .constants import (
     ENCRYPTION,
     GRAPHQL,
     HASH,
+    HEALTH_CHECK,
     INTERVAL,
     LOG_DIR,
     MAX_CHUNK_SIZE,
@@ -216,6 +219,9 @@ class Config(ConfigParser):
             Config._config = ConfigParser(inline_comment_prefixes="#")
 
             if not CONFIG_FILE.is_file():
+                concurrent_encryptions: str = "10 # Maximum number of recordings that will be encrypted concurrently"
+                if platform.system() == "Darwin":  # MacOS
+                    concurrent_encryptions = "1 # Maximum number of recordings that will be encrypted concurrently. This value should be set to 1 on MacOS due to an issue with multi-processing"
                 _DEFAULT_CONFIG: Dict[str, Any] = {
                     UPLOAD: {
                         BACKOFF: "1.5 # Backoff factor for retries",
@@ -241,7 +247,7 @@ class Config(ConfigParser):
                         RETRIES: "3 # Number of times to retry a failed upload",
                     },
                     HASH: {
-                        CONCURRENT_HASHES: "10 # Maximum number of recordings whose hashes will be calculated concurrently",
+                        CONCURRENT_HASHES: "4 # Maximum number of recordings whose hashes will be calculated concurrently",
                         CHUNK_SIZE: "10485760 # 10 * 2**20 (10MB)",
                     },
                     DEFAULT: {
@@ -250,8 +256,11 @@ class Config(ConfigParser):
                     },
                     ENCRYPTION: {
                         CHUNK_SIZE: "52428800 # 50 * 2**20 (50MB)",
-                        CONCURRENT_ENCRYPTIONS: "10 # Maximum number of recordings that will be encrypted concurrently",
+                        CONCURRENT_ENCRYPTIONS: concurrent_encryptions,
                         DELETE_ENCRYPTED_FILES: "true # Delete encrypted files after upload is done",
+                    },
+                    HEALTH_CHECK: {
+                        CONCURRENT_HEALTH_CHECKS: "2  # Maximum number of checks that can run concurrently",
                     },
                 }
 
