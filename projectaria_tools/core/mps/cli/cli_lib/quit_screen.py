@@ -87,8 +87,8 @@ class QuitScreen(ModalScreen[QuitMode]):
             Horizontal(
                 Static("Logout", id="logout_label"), Switch(), id="logout_container"
             ),
-            Button("Quit", variant="primary", id="quit"),
             Button("Cancel", variant="primary", id="cancel"),
+            Button("Quit", variant="primary", id="quit"),
             id="dialog",
         )
 

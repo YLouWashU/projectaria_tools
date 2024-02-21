@@ -91,6 +91,7 @@ class LoginScreen(ModalScreen[bool]):
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the screen."""
+        self._login_attempt: int = 1
 
         yield Grid(
             Static("[b]Login to Aria Machine Perception Services", id="title"),
@@ -104,8 +105,8 @@ class LoginScreen(ModalScreen[bool]):
                 id="container",
             ),
             Static(id="login_error"),
-            Button("Login", variant="primary", id="login"),
             Button("Cancel", variant="primary", id="cancel"),
+            Button("Login", variant="primary", id="login"),
             id="dialog",
         )
 
@@ -118,17 +119,21 @@ class LoginScreen(ModalScreen[bool]):
             return
         elif event.button.id == "login":
             username = self.query_one("#username", Input).value.strip()
-        password = self.query_one("#password", Input).value.strip()
-        logger.debug(f"Logging in as {username} {password}")
-        if username and password:
-            try:
-                if await self.app._authenticator.login(
-                    username, password, self.query_one(Switch).value
-                ):
-                    self.dismiss(True)
-                    return
-            except AuthenticationError as e:
-                logger.exception(e)
+            password = self.query_one("#password", Input).value.strip()
+            logger.debug(f"Logging in as {username} {password}")
+            if username and password:
+                try:
+                    if await self.app._authenticator.login(
+                        username, password, self.query_one(Switch).value
+                    ):
+                        self.dismiss(True)
+                        return
+                except AuthenticationError as e:
+                    logger.exception(e)
+            if self._login_attempt < 3:
                 self.query_one("#login_error").update(
-                    Text.from_markup("[red]Invalid credentials")
+                    Text.from_markup(f"[red]Login Failed ({self._login_attempt}/3)")
                 )
+                self._login_attempt += 1
+            else:
+                self.dismiss(False)
