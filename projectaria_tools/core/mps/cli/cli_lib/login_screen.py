@@ -30,12 +30,67 @@ logger = logging.getLogger(__name__)
 class LoginScreen(ModalScreen[bool]):
     """Login screen"""
 
-    CSS_PATH = "login_screen.tcss"
+    CSS = """
+    LoginScreen {
+        align: center middle;
+        background: $background 100%;
+    }
+
+    .label {
+        color: $foreground;
+        content-align: right middle;
+    }
+
+    #dialog {
+        grid-size: 3 5;
+        grid-gutter: 1 2;
+        grid-rows: 2 3 3 3 3;
+        padding: 1 1;
+        width: 60;
+        height: 24;
+        border: thick $background 80%;
+        background: $surface;
+    }
+
+    #title {
+        column-span: 3;
+        content-align: center middle;
+    }
+
+    .label {
+        column-span: 1;
+        content-align: right middle;
+        height: 3
+    }
+
+    #remember_me_label {
+        height: 3;
+        content-align: center middle;
+        width: auto;
+    }
+
+    #username, #password {
+        column-span: 2;
+        height: 4;
+        padding: 0 1;
+    }
+
+    Button {
+        width: 100%;
+        height: 5;
+        text-align: center;
+    }
+
+    #container, #buttons {
+        column-span: 3;
+        align: center middle;
+        height: 3;
+    }
+
+    """
 
     def compose(self) -> ComposeResult:
-        """
-        Create child widgets for the screen.
-        """
+        """Create child widgets for the screen."""
 
         yield Grid(
             Static("[b]Login to Aria Machine Perception Services", id="title"),

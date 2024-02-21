@@ -34,7 +34,48 @@ class QuitMode(int, Enum):
 class QuitScreen(ModalScreen[QuitMode]):
     """Screen with a dialog to quit."""
 
-    CSS_PATH = "quit_screen.tcss"
+    CSS = """
+        QuitScreen {
+            align: center middle;
+            background: $background 80%;
+        }
+
+        #dialog {
+            grid-size: 2 3;
+            grid-gutter: 1 2;
+            grid-rows: 1fr 3fr 3;
+            padding: 0 1;
+            width: 60;
+            height: 11;
+            border: thick $background 80%;
+            background: $surface;
+        }
+
+        #question {
+            column-span: 2;
+            height: 1fr;
+            width: 1fr;
+            content-align: center middle;
+        }
+
+        #logout_container {
+            column-span: 2;
+            align: center middle;
+        }
+        #logout_label{
+            height: 3;
+            content-align: center middle;
+            width: auto;
+        }
+        #logout {
+            background: $surface;
+        }
+
+        Button {
+            width: 100%;
+        }
+
+    """
     BINDINGS = [("escape", "app.pop_screen", "Pop screen")]
 
     def compose(self) -> ComposeResult:

@@ -186,7 +186,49 @@ class MpsApp(App):
         ("ctrl+q", "request_quit", "Quit   "),
         ("d", "toggle_dark", "Toggle dark mode"),
     ]
-    CSS_PATH = "mps_app.tcss"
+    CSS = """
+        #top {
+            height: 2;
+        }
+
+        #elapsed_time {
+            width: auto;
+            height: auto;
+            dock: left;
+            content-align: center middle;
+            padding: 1 5;
+        }
+
+        #user {
+            width: auto;
+            height: auto;
+            dock: right;
+            content-align: center middle;
+            padding: 1 5;
+        }
+
+        #stages_title {
+            content-align: center middle;
+            height: auto;
+            padding: 1 0 0 0;
+        }
+
+        #stages {
+            content-align: center middle;
+            height: auto;
+            padding: 1 0;
+        }
+
+        #status,
+        #status_title {
+            content-align: center middle;
+        }
+
+        #log {
+            height: auto;
+            padding: 1 5;
+        }
+    """
 
     def __init__(self, args: argparse.Namespace, log_path: Path) -> None:
         self._args: argparse.Namespace = args
