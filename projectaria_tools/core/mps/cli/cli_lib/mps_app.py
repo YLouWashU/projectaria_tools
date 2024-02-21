@@ -186,7 +186,7 @@ class MpsApp(App):
         ("ctrl+q", "request_quit", "Quit   "),
         ("d", "toggle_dark", "Toggle dark mode"),
     ]
-    CSS = "mps_app.tcss"
+    CSS_PATH = "mps_app.tcss"
 
     def __init__(self, args: argparse.Namespace, log_path: Path) -> None:
         self._args: argparse.Namespace = args
