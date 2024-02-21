@@ -54,6 +54,13 @@ class HttpHelper:
         logger.debug("Creating http session")
         self._http_session: ClientSession = ClientSession(raise_for_status=True)
 
+    @property
+    def session(self) -> ClientSession:
+        """
+        Get the http session
+        """
+        return self._http_session
+
     async def __aenter__(self) -> "HttpHelper":
         """
         Enter context manager and return the instance itself

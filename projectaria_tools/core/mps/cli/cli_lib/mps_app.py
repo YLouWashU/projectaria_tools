@@ -187,47 +187,40 @@ class MpsApp(App):
         ("d", "toggle_dark", "Toggle dark mode"),
     ]
     CSS = """
-        #top {
-            height: 2;
-        }
-
-        #elapsed_time {
-            width: auto;
-            height: auto;
-            dock: left;
-            content-align: center middle;
-            padding: 1 5;
-        }
-
-        #user {
-            width: auto;
-            height: auto;
-            dock: right;
-            content-align: center middle;
-            padding: 1 5;
-        }
-
-        #stages_title {
-            content-align: center middle;
-            height: auto;
-            padding: 1 0 0 0;
-        }
-
-        #stages {
-            content-align: center middle;
-            height: auto;
-            padding: 1 0;
-        }
-
-        #status,
-        #status_title {
-            content-align: center middle;
-        }
-
-        #log {
-            height: auto;
-            padding: 1 5;
-        }
+    #top {
+        height: 2;
+    }
+    #elapsed_time {
+        width: auto;
+        height: auto;
+        dock: left;
+        content-align: center middle;
+        padding: 1 5;
+    }
+    #user {
+        width: auto;
+        height: auto;
+        dock: right;
+        content-align: center middle;
+        padding: 1 5;
+    }
+    #stages_title {
+        content-align: center middle;
+        height:auto;
+        padding: 1 0 0 0;
+    }
+    #stages {
+        content-align: center middle;
+        height:auto;
+        padding: 1 0;
+    }
+    #status, #status_title{
+        content-align: center middle;
+    }
+    #log {
+        height: auto;
+        padding: 1 5;
+    }
     """
 
     def __init__(self, args: argparse.Namespace, log_path: Path) -> None:
@@ -303,6 +296,9 @@ class MpsApp(App):
         logger.debug(f"Setting username to {self._authenticator.user}")
         self.query_one("#user", Static).update(
             Text.from_markup(f"Username: [bold][cyan]{self._authenticator.user}"),
+        )
+        self.query_one("#status_title", Static).update(
+            f"[b] MPS REQUESTS - {self._args.mode.upper()}",
         )
 
     @work

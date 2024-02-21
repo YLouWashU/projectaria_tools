@@ -92,6 +92,12 @@ class QuitScreen(ModalScreen[QuitMode]):
             id="dialog",
         )
 
+    def on_mount(self) -> None:
+        """
+        Called when the widget is mounted
+        """
+        self.query_one("#cancel").focus()
+
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         """
         Handle button press events.

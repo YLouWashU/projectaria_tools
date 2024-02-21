@@ -16,6 +16,7 @@ import asyncio
 import concurrent
 import functools
 import logging
+import multiprocessing
 import platform
 import zipfile
 from configparser import ConfigParser
@@ -106,7 +107,8 @@ async def to_proc(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T:
     """
     loop = asyncio.get_running_loop()
     func_call = functools.partial(func, *args, **kwargs)
-    with concurrent.futures.ProcessPoolExecutor() as pool:
+    ctx = multiprocessing.get_context("fork") if platform.system() == "Darwin" else None
+    with concurrent.futures.ProcessPoolExecutor(mp_context=ctx) as pool:
         return await loop.run_in_executor(pool, func_call)
 
 
