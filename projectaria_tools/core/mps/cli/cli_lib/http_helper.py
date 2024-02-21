@@ -50,25 +50,16 @@ class HttpHelper:
     It leverages aiohttp for async http requests.
     """
 
-    def __init__(self, http_session: ClientSession) -> None:
-        """
-        Create and store the client session object. According to the documentation, we
-        only need one session per process.
-        """
-        self._http_session: ClientSession = http_session
+    def __init__(self):
+        logger.debug("Creating http session")
+        self._http_session: ClientSession = ClientSession(raise_for_status=True)
 
-    def set_token(self, token: str) -> None:
+    @property
+    def session(self) -> ClientSession:
         """
-        Store the authorization token.
+        Get the http session
         """
-        self._auth_token: str = token
-
-    def set_auth_token(self, auth_token: str) -> None:
-        """
-        Return the stored client session object.
-        """
-        logger.debug("Setting http session auth header")
-        self._http_session.headers["Authorization"] = f"OAuth {auth_token}"
+        return self._http_session
 
     async def __aenter__(self) -> "HttpHelper":
         """
