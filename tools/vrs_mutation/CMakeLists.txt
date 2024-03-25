@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find_package(Pangolin QUIET)
-if (Pangolin_FOUND)
-    find_package(Threads REQUIRED)
-    add_subdirectory(visualization)
-    add_subdirectory(mps_visualization)
-else()
-    message("Pangolin has not been found. Visualization tools will not be compiled.")
-endif()
+find_package(Torch REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
-add_subdirectory(samples)
+find_package(OpenCV REQUIRED)
 
-if(PROJECTARIA_TOOLS_BUILD_EGOBLUR)
-    add_subdirectory(vrs_mutation)
-endif()
+find_package(TorchVision REQUIRED)
+
+add_executable( vrs_mutation
+    EgoBlurImageMutator.h
+    ImageMutationFilterCopier.h
+    main.cpp
+)
+target_link_libraries(vrs_mutation vrslib vrs_utils TorchVision::TorchVision CLI11::CLI11 "${TORCH_LIBRARIES}" ${OpenCV_LIBS})
